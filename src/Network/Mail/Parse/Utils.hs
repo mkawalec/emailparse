@@ -47,7 +47,7 @@ commentRemover contents = T.strip withoutComment
 -- a list of headers, fail if it's not there
 findHeader :: Text -> [Header] -> Either ErrorMessage Header
 findHeader hdr headers = maybeToEither notFound header
-  where notFound    = "Cound not find header '" ++ show hdr ++ "'"
+  where notFound    = T.concat ["Cound not find header '", T.pack . show $ hdr, "'"]
         eigenHeader = T.toLower hdr
         header      = find (\x -> T.toLower (headerName x) == eigenHeader) headers
 

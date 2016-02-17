@@ -9,7 +9,6 @@ module Network.Mail.Parse.Parsers.HeaderFields (
 ) where
 
 import Network.Mail.Parse.Types
-import Network.Mail.Parse.Parsers.Utils
 import Network.Mail.Parse.Decoders.BodyDecoder (transferDecode, encodingToUtf)
 
 import Data.Attoparsec.Text
@@ -21,14 +20,13 @@ import Control.Applicative
 import Data.Maybe
 import qualified Data.Char as C
 import Data.Either (isRight)
-import Data.Either.Combinators (mapRight, mapLeft)
+import Data.Either.Combinators (mapLeft, mapBoth)
 
-import Data.Foldable (foldrM)
 import Data.Either.Unwrap (fromRight)
 
 import Data.Time.Parse (strptime)
 import Data.Time.LocalTime
-import Control.Monad (foldM, join, liftM)
+import Control.Monad (join, liftM)
 
 -- |Parses a name-addr formatted email
 nameAddrParser :: Parser EmailAddress
@@ -61,11 +59,19 @@ emailAddressListParser :: Parser [EmailAddress]
 emailAddressListParser =
   (eatWhitespace *> emailAddressParser) `sepBy'` char ','
 
+minutesAndHoursToTZ :: Int -> Either T.Text (Int, T.Text) ->
+  (Int, T.Text) -> Either T.Text TimeZone
+minutesAndHoursToTZ direction minutes hours =
+    Right $ minutesToTimeZone timezoneMins
+  where knownMinutes  = if isRight minutes
+                          then fst . fromRight $ minutes
+                          else 0
+        h             = fst hours
+        timezoneMins  = direction * (h * 60 + knownMinutes)
+
 zoneToOffset :: T.Text -> Either ErrorMessage TimeZone
-zoneToOffset offset = if offsetH == '+' || offsetH == '-' then
-  (if isRight hours && isRight minutes
-    then Right $ minutesToTimeZone completeOffset
-    else hours >>= \_ -> mapRight (\_ -> minutesToTimeZone 0) minutes)
+zoneToOffset offset = if offsetH == '+' || offsetH == '-'
+  then hours >>= (minutesAndHoursToTZ direction minutes)
   else Right $ minutesToTimeZone . (*60) $ case offset of
     "UT" -> 0
     "GMT" -> 0
@@ -81,12 +87,11 @@ zoneToOffset offset = if offsetH == '+' || offsetH == '-' then
   where offsetH = T.head offset
         direction = if offsetH == '+' then 1 else -1
         splitOffset = T.splitAt 2 $ T.tail offset
-        hours = TR.decimal . fst $ splitOffset
-        minutes = TR.decimal . snd $ splitOffset
-        completeOffset = direction * ((fst . fromRight $ hours) * 60 + (fst . fromRight$ minutes))
+        hours = mapLeft T.pack $ TR.decimal . fst $ splitOffset
+        minutes = mapLeft T.pack $ TR.decimal . snd $ splitOffset
 
 timeToLocalTime :: (T.Text, T.Text, T.Text, [T.Text]) -> Maybe LocalTime
-timeToLocalTime (day, month, year, timeOfDay@(hours:minutes:secs)) =
+timeToLocalTime (day, month, year, timeOfDay@(hours:minutes:_)) =
     liftM fst (strptime "%d %b %Y %T" dateString)
   where dateString = T.intercalate " " [day, month, year, timeString]
         seconds = if length timeOfDay < 3 then "0" else last timeOfDay
@@ -112,19 +117,19 @@ timeParser =
     let timeZone = zoneToOffset zone
     let result = if isJust localTime && isRight timeZone
                   then Right $ ZonedTime (fromJust localTime) (fromRight timeZone)
-                  else mapRight (const ZonedTime {}) timeZone >>= \_ -> Left "cannot decode timezone"
+                  else mapBoth (const "cannot decode timezone") (const ZonedTime {}) timeZone
     return result
 
 -- |Parse a time from a header containing time
 parseTime :: T.Text -> Either ErrorMessage ZonedTime
-parseTime dateString = join (parseOnly timeParser withoutDoW)
+parseTime dateString = join . mapLeft T.pack $ parseOnly timeParser withoutDoW
   where withoutDoW = T.strip . last $  T.splitOn "," dateString
 
 parseEmailAddress :: T.Text -> Either ErrorMessage EmailAddress
-parseEmailAddress = parseOnly emailAddressParser
+parseEmailAddress = mapLeft T.pack . parseOnly emailAddressParser
 
 parseEmailAddressList :: T.Text -> Either ErrorMessage [EmailAddress]
-parseEmailAddressList = parseOnly emailAddressListParser
+parseEmailAddressList = mapLeft T.pack . parseOnly emailAddressListParser
 
 untilEndSection :: Char -> Char -> Maybe Char
 untilEndSection prev current =
@@ -179,10 +184,10 @@ untilEOF parser = do
 parseText' :: Parser (Either ErrorMessage T.Text)
 parseText' = do
   blocks <- untilEOF parseTextBlock
-  return $ liftM T.concat (foldrM (flip isBroken) [] blocks)
+  return $ liftM T.concat (mapM id blocks)
 
 parseText :: T.Text -> Either ErrorMessage T.Text
-parseText = join . parseOnly parseText'
+parseText = join . mapLeft T.pack . parseOnly parseText'
 
 parseTextList :: T.Text -> T.Text -> Either ErrorMessage [T.Text]
-parseTextList splitChar t = foldM isBroken [] . map parseText $ T.splitOn splitChar t
+parseTextList splitChar t = mapM parseText $ T.splitOn splitChar t

@@ -5,11 +5,13 @@ import qualified Data.ByteString.Char8 as BSC
 import Network.Mail.Parse.Parsers.Multipart (parseMultipart)
 import Network.Mail.Parse.Parsers.Header (headerParser)
 import Network.Mail.Parse.Decoders.BodyDecoder (decodeBody, decodeTextBody)
-import Network.Mail.Parse.Parsers.Utils (discoverAttachment, isBroken)
+import Network.Mail.Parse.Parsers.Utils (discoverAttachment)
 import Network.Mail.Parse.Types
 import Network.Mail.Parse.Utils
 
+import qualified Data.Text as T
 import Data.Either.Utils (maybeToEither)
+import Data.Either.Combinators (mapLeft)
 import Data.Attoparsec.ByteString
 import Data.List (find)
 import Data.Maybe (fromJust, isJust)
@@ -19,8 +21,6 @@ import Data.Either (rights, isRight)
 
 import Codec.MIME.Parse (parseMIMEType)
 import Codec.MIME.Type
-
-import Control.Monad (foldM)
 
 -- |Parses a MIME message part. Needs headers from the actual message
 -- in case the MIME block misses some encoding blocks
@@ -40,8 +40,7 @@ mimeParser bodyHeaders = do
 -- |Parse a set of parts.
 multipartParser :: [Header] -> [BSC.ByteString] -> Either ErrorMessage [EmailBody]
 multipartParser bodyHeaders parts = do
-  let parsed = map (parseOnly $ mimeParser bodyHeaders) parts
-  foldM isBroken [] parsed
+  mapM (\p -> mapLeft T.pack $ parseOnly (mimeParser bodyHeaders) p) parts
 
 -- |Parse a mime encoded body.
 parseMIME :: [Header] -> BSC.ByteString -> Either ErrorMessage [EmailBody]

@@ -8,14 +8,6 @@ import Data.List
 import Control.Monad (liftM)
 
 
--- |Add the current body to the list if it succeeds, if
--- it doesn't return the error. Looks like it could be
--- handled by an instance of some typeclass
-isBroken :: [a] -> Either ErrorMessage a -> Either ErrorMessage [a]
-isBroken bodies current = case current of
-  Right val -> Right (val:bodies)
-  Left err -> Left err
-
 -- |Check if the given headers represent an attachment
 discoverAttachment :: [Header] -> Maybe T.Text
 discoverAttachment headers = hdr >>= findAttachmentName . headerContents

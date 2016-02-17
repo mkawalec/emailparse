@@ -5,7 +5,7 @@ import qualified Data.ByteString.Char8 as BS
 import Data.Time.LocalTime (ZonedTime(..))
 
 type UID = Integer
-type ErrorMessage = String
+type ErrorMessage = Text
 
 data EmailMessage = EmailMessage {
   flags :: Maybe [Flag],
