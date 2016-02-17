@@ -1,7 +1,6 @@
 module Network.Mail.Parse.Parsers.Utils where
 
 import Network.Mail.Parse.Types
-import Types
 import Network.Mail.Parse.Utils
 
 import qualified Data.Text as T

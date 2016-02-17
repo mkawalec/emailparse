@@ -1,6 +1,5 @@
 module Network.Mail.Parse (parseMessage) where
 
-import Types
 import Network.Mail.Parse.Types
 import Network.Mail.Parse.Parsers.Message (messageParser)
 

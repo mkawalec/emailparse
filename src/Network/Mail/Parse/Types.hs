@@ -2,11 +2,11 @@ module Network.Mail.Parse.Types where
 
 import Data.Text
 import qualified Data.ByteString.Char8 as BS
-import GHC.Generics
-import Data.Aeson
-import Data.Time.LocalTime (ZonedTime)
+import Data.Time.LocalTime (ZonedTime(..))
 
 type UID = Integer
+type ErrorMessage = String
+
 data EmailMessage = EmailMessage {
   flags :: Maybe [Flag],
 
@@ -26,7 +26,11 @@ data EmailMessage = EmailMessage {
 
   emailHeaders :: ![Header],
   emailBodies :: ![EmailBody]
-} deriving (Generic, Show)
+} deriving (Show, Eq)
+
+instance Eq ZonedTime where
+  x == y = (zonedTimeToLocalTime x) == (zonedTimeToLocalTime y) &&
+           (zonedTimeZone x) == (zonedTimeZone y)
 
 data Flag = FSeen
           | FAnswered
@@ -34,14 +38,14 @@ data Flag = FSeen
           | FDeleted
           | FDraft
           | FOther Text
-          deriving (Generic, Show, Eq)
+          deriving (Show, Eq)
 
 type MessageId = Text
 
 data EmailAddress = EmailAddress {
   emailAddress :: !Text,
   emailLabel :: Maybe Text
-} deriving (Generic, Show)
+} deriving (Show)
 
 instance Eq EmailAddress where
   x == y = emailAddress x == emailAddress y
@@ -49,7 +53,7 @@ instance Eq EmailAddress where
 data Header = Header {
   headerName :: !Text,
   headerContents :: !Text
-} deriving (Generic, Show)
+} deriving (Eq, Show)
 
 -- |An email body contains the contents of an email part
 -- up until the boundary marker.
@@ -69,22 +73,4 @@ data EmailBody
     -- |Location of the actual filename on disk
     storageFilename :: Maybe Text
   }
-  deriving (Generic, Show)
-
--- Please forgive me, gods of good code
-instance ToJSON BS.ByteString where
-  toJSON _ = toJSON ("" :: Text)
-
-instance FromJSON BS.ByteString where
-  parseJSON _ = return BS.empty
-
-instance ToJSON EmailMessage
-instance ToJSON Header
-instance ToJSON EmailBody
-instance ToJSON EmailAddress
-instance ToJSON Flag
-instance FromJSON EmailMessage
-instance FromJSON Header
-instance FromJSON EmailBody
-instance FromJSON EmailAddress
-instance FromJSON Flag
+  deriving (Eq, Show)

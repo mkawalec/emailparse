@@ -10,7 +10,6 @@ module Network.Mail.Parse.Parsers.HeaderFields (
 
 import Network.Mail.Parse.Types
 import Network.Mail.Parse.Parsers.Utils
-import Types
 import Network.Mail.Parse.Decoders.BodyDecoder (transferDecode, encodingToUtf)
 
 import Data.Attoparsec.Text

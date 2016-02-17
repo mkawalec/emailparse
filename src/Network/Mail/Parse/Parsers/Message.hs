@@ -8,7 +8,6 @@ import Data.Either (isRight)
 import Data.Either.Unwrap (fromRight)
 import Control.Monad (liftM)
 
-import Types
 import Network.Mail.Parse.Types
 import Network.Mail.Parse.Utils
 import Data.Text (Text)

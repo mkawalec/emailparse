@@ -2,7 +2,6 @@ module Network.Mail.Parse.Parsers.MIME where
 
 import qualified Data.ByteString.Char8 as BSC
 
-import Types
 import Network.Mail.Parse.Parsers.Multipart (parseMultipart)
 import Network.Mail.Parse.Parsers.Header (headerParser)
 import Network.Mail.Parse.Decoders.BodyDecoder (decodeBody, decodeTextBody)

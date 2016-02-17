@@ -1,7 +1,6 @@
 module Network.Mail.Parse.Utils where
 
 import Network.Mail.Parse.Types
-import Types
 
 import Data.Attoparsec.ByteString
 import qualified Data.Attoparsec.ByteString as AP
