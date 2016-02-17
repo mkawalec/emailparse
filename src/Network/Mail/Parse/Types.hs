@@ -2,16 +2,16 @@ module Network.Mail.Parse.Types where
 
 import Data.Text
 import qualified Data.ByteString.Char8 as BS
-import Data.Time.LocalTime (ZonedTime(..))
+import Data.Time.Calendar (Day(..))
+import Data.Time.LocalTime (ZonedTime(..), minutesToTimeZone, LocalTime(..),
+  TimeOfDay(..))
 
 type UID = Integer
 type ErrorMessage = Text
 
 data EmailMessage = EmailMessage {
-  flags :: Maybe [Flag],
-
-  origDate :: !ZonedTime,
-  from :: !EmailAddress,
+  origDate :: Maybe ZonedTime,
+  from :: Maybe EmailAddress,
   sender :: Maybe EmailAddress,
   replyTo :: Maybe EmailAddress,
   to :: Maybe [EmailAddress],
@@ -32,13 +32,20 @@ instance Eq ZonedTime where
   x == y = (zonedTimeToLocalTime x) == (zonedTimeToLocalTime y) &&
            (zonedTimeZone x) == (zonedTimeZone y)
 
-data Flag = FSeen
-          | FAnswered
-          | FFlagged
-          | FDeleted
-          | FDraft
-          | FOther Text
-          deriving (Show, Eq)
+defaultZT :: ZonedTime
+defaultZT = ZonedTime {
+  zonedTimeZone = minutesToTimeZone 0,
+  zonedTimeToLocalTime = LocalTime {
+    localDay = ModifiedJulianDay {
+      toModifiedJulianDay = 1
+    },
+    localTimeOfDay = TimeOfDay {
+      todHour = 0,
+      todMin = 0,
+      todSec = 0
+    }
+  }
+}
 
 type MessageId = Text
 
@@ -59,11 +66,12 @@ data Header = Header {
 -- up until the boundary marker.
 data EmailBody
   -- |Body of a MIME message part. Contains headers
-  = MIMEBody { mimeHeaders :: ![Header], mimeBody :: !Text}
+  = MIMEBody EmailMessage
+  -- = MIMEBody { mimeHeaders :: ![Header], mimeBody :: !Text}
   -- |If the message contained no MIME information, it's probably
   -- just some text. Best guess decoding into UTF-8 is applied
   | TextBody !Text
-  -- |Attachement is a part of a MIME message, but a rather special
+  -- |Attachment is part of a MIME message, but a rather special
   -- one. It's decoded from whatever the transfer encoding was applied
   -- and left as a raw sollection of bytes for your enjoyment
   | Attachment {

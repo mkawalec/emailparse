@@ -5,7 +5,7 @@ import qualified Data.ByteString.Char8 as BSC
 import Codec.MIME.Parse (parseMIMEType)
 import Codec.MIME.Type
 
-import Data.Either.Combinators (mapLeft)
+import Data.Either.Combinators (mapLeft, fromRight')
 import Data.Either.Utils (maybeToEither)
 import Data.Either (isRight, rights)
 
@@ -43,7 +43,7 @@ encodingToUtf body encoding = case T.toLower encoding of
 decodeBody :: [Header] -> BSC.ByteString -> BSC.ByteString
 decodeBody headers body =
   if isRight decodedBody
-    then head . rights $ [decodedBody]
+    then fromRight' decodedBody
     else body
   where decodedBody = findHeader "Content-Transfer-Encoding" headers >>=
           return . headerContents >>=
@@ -57,7 +57,7 @@ decodeBody headers body =
 decodeTextBody :: [Header] -> BSC.ByteString -> Text
 decodeTextBody headers body =
   if isRight charset
-    then encodingToUtf decodedBody (head . rights $ [charset])
+    then encodingToUtf decodedBody $ fromRight' charset
     else decodeUtf8 decodedBody
   where decodedBody = decodeBody headers body
         charset = findHeader "Content-Type" headers >>=

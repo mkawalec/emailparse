@@ -117,7 +117,7 @@ timeParser =
     let timeZone = zoneToOffset zone
     let result = if isJust localTime && isRight timeZone
                   then Right $ ZonedTime (fromJust localTime) (fromRight timeZone)
-                  else mapBoth (const "cannot decode timezone") (const ZonedTime {}) timeZone
+                  else mapBoth (const "cannot decode timezone") (const defaultZT) timeZone
     return result
 
 -- |Parse a time from a header containing time
