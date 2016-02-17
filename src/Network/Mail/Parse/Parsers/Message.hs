@@ -42,20 +42,23 @@ parseHeader headers parser headerN = liftM headerContents header >>= parser
   where header = findHeader headerN headers
 
 -- |Parses a single message
-messageParser :: Maybe [Header] -> Parser (Either ErrorMessage EmailMessage)
-messageParser headersIn = DT.trace "started" $ do
+messageParser :: Maybe [Header] -> Maybe [Header] -> Parser (Either ErrorMessage EmailMessage)
+messageParser headersIn helperHeadersIn = DT.trace "started" $ do
   let headers = []
   headers <- if isJust headersIn
     then return . fromJust $ headersIn
     else manyTill' headerParser $ string "\r\n"
+  let helperHeaders = if isJust helperHeadersIn then fromJust helperHeadersIn else []
+
   DT.trace "hoai" $ return ()
   body <- takeByteString
   --DT.trace ("got body " ++ (show body)) $ return ()
 
+
   -- Parse MIME if the message is in a MIME format
   let parsedBody = if isJust $ find isMIME headers
-      then parseMIME headers body
-      else Right [TextBody $ decodeTextBody headers body]
+      then parseMIME (headers ++ helperHeaders) body
+      else Right [TextBody $ decodeTextBody (headers ++ helperHeaders) body]
 
   let p = parseHeader headers
   let e2m = eitherToMaybe
@@ -91,8 +94,7 @@ mimeParser bodyHeaders = do
       let filename = fromJust isAttachment
       let decodedBody = decodeBody headers body
       return . Right $ Attachment headers filename (Just decodedBody) Nothing
-    else (liftM . liftM) MIMEBody $ messageParser (Just headers)
-    --else return $! MIMEBody headers $ decodeTextBody (headers ++ bodyHeaders) body
+    else (liftM . liftM) MIMEBody $ messageParser (Just headers) (Just bodyHeaders)
 
 -- |Parse a set of parts.
 multipartParser :: [Header] -> [BSC.ByteString] -> Either ErrorMessage [EmailBody]

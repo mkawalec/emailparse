@@ -58,7 +58,8 @@ library
                        pipes == 4.1.*,
                        imap >= 0.2.0.1,
                        data-default == 0.5.*,
-                       derive == 2.5.*
+                       derive == 2.5.*,
+                       ipprint == 0.6
   hs-source-dirs:      src
   c-sources:           csrc/codec.c
   include-dirs:        csrc
