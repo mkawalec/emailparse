@@ -24,17 +24,21 @@ genChar = do
     then genChar
     else return . chr $ char
 
+shrinkText :: T.Text -> [T.Text]
+shrinkText t = (tail $ T.tails t) ++ (init $ T.inits t)
+
+genSomeText :: Int -> Gen [T.Text]
+genSomeText maxSize = do
+  testSize <- choose (0, maxSize)
+  mapM (const $ T.singleton <$> genChar) [0..testSize]
+
 instance Arbitrary HeaderName where
-  arbitrary = HeaderName . T.concat <$> hdrText
-    where char = genChar
-          hdrText = mapM (const $ T.singleton <$> genChar) [1..5]
-  shrink (HeaderName t) = map HeaderName $ (tail $ T.tails t) ++ (init $ T.inits t)
+  arbitrary = HeaderName . T.concat <$> genSomeText 7
+  shrink (HeaderName t) = map HeaderName $ shrinkText t
 
 instance Arbitrary HeaderValue where
-  arbitrary = HeaderValue . T.concat <$> hdrText
-    where char = genChar
-          hdrText = mapM (const $ T.singleton <$> genChar) [1..5]
-  shrink (HeaderValue t) = map HeaderValue $ (tail $ T.tails t) ++ (init $ T.inits t)
+  arbitrary = HeaderValue . T.concat <$> genSomeText 15
+  shrink (HeaderValue t) = map HeaderValue $ shrinkText t
 
 newtype HeaderName = HeaderName T.Text
   deriving (Show, Eq, Ord)
