@@ -19,10 +19,9 @@ import qualified Data.Text as T
 
 import qualified Data.ByteString.Char8 as BSC
 import Data.Either.Utils (maybeToEither)
-import Data.Either.Combinators (mapLeft)
 
 import Data.Text.Encoding (encodeUtf8)
-import Data.Either.Combinators (fromRight')
+import Data.Either.Combinators (fromRight', mapLeft)
 
 import Codec.MIME.Parse (parseMIMEType)
 import Codec.MIME.Type
@@ -32,7 +31,7 @@ import qualified Debug.Trace as DT
 
 parseHeader :: Header -> Either ErrorMessage Header
 parseHeader header =
-  case T.toLower . headerName $ header of
+  mapLeft explicitErr $ case T.toLower hname of
     "date" -> liftM Date $ parseTime contents
     "from" -> liftM From $ parseEmailAddress contents
     "reply-to" -> liftM ReplyTo $ parseEmailAddress contents
@@ -45,11 +44,17 @@ parseHeader header =
     "subject" -> Right $ Subject contents
     "comments" -> Right $ Comments contents
     "keywords" -> liftM Keywords $ parseTextList "," contents
-    _ -> Right $ OtherHeader (headerName header) contents
-  where contents = headerContents header
+    _ -> Right $ OtherHeader hname contents
+  where hname       = headerName header
+        contents    = headerContents header
+        explicitErr = \err -> T.concat ["Error while parsing header'", hname,
+                                        "': ", err]
 
 -- |Parses a single message
-messageParser :: Maybe [Header] -> Maybe [Header] -> Parser (Either ErrorMessage EmailMessage)
+messageParser :: Maybe [Header] -> -- ^ Headers, if they were already parsed
+                Maybe [Header] -> -- ^ Context headers, useful is encoding is only
+                                  -- defined in the message above, for instance
+                Parser (Either ErrorMessage EmailMessage)
 messageParser headersIn helperHeadersIn = DT.trace "started" $ do
   headers <- if isJust headersIn
     then return . fromJust $ headersIn
@@ -57,14 +62,13 @@ messageParser headersIn helperHeadersIn = DT.trace "started" $ do
   let helperHeaders = if isJust helperHeadersIn then fromJust helperHeadersIn else []
 
   body <- takeByteString
+  let parsedHeaders = mapM parseHeader headers
 
   -- Parse MIME if the message is in a MIME format
   let parsedBody = if isJust $ find isMIME headers
       then parseMIME (headers ++ helperHeaders) body
       else Right [TextBody $ decodeTextBody (headers ++ helperHeaders) body]
 
-
-  let parsedHeaders = mapM parseHeader headers
   return $! parsedBody >>= return . EmailMessage parsedHeaders
 
 
@@ -80,7 +84,7 @@ mimeParser bodyHeaders = do
       let filename = fromJust isAttachment
       let decodedBody = decodeBody headers body
       return . Right $ Attachment headers filename (Just decodedBody) Nothing
-    else (liftM . liftM) MIMEBody $ messageParser (Just headers) (Just bodyHeaders)
+    else (liftM . liftM) MessageBody $ messageParser (Just headers) (Just bodyHeaders)
 
 -- |Parse a set of parts.
 multipartParser :: [Header] -> [BSC.ByteString] -> Either ErrorMessage [EmailBody]

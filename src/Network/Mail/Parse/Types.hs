@@ -45,7 +45,7 @@ instance Eq EmailAddress where
 -- up until the boundary marker.
 data EmailBody
   -- |Body of a MIME message part. Contains headers
-  = MIMEBody EmailMessage
+  = MessageBody EmailMessage
   -- = MIMEBody { mimeHeaders :: ![Header], mimeBody :: !Text}
   -- |If the message contained no MIME information, it's probably
   -- just some text. Best guess decoding into UTF-8 is applied
