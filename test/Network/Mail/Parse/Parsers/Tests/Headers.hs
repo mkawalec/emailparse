@@ -10,6 +10,8 @@ import qualified Data.Text as T
 import Data.Text.Encoding (encodeUtf8)
 import qualified Data.Attoparsec.ByteString as AP
 import Data.Char (chr)
+import Control.Monad (liftM)
+import qualified Debug.Trace as DT
 
 import Data.Either.Combinators (isRight, fromRight')
 
@@ -31,12 +33,20 @@ genSomeText maxSize = do
   testSize <- choose (0, maxSize)
   mapM (const $ T.singleton <$> genChar) [0..testSize]
 
+genLines :: Int -> Int -> Gen T.Text
+genLines maxLineLength maxLines = do
+  lineLength :: Int <- choose (0, maxLineLength)
+  linesNo :: Int <- choose (0, maxLines)
+
+  allLines <- mapM (const $ liftM T.concat $ genSomeText lineLength) [0..linesNo]
+  return $ T.intercalate "\r\n      " allLines
+
 instance Arbitrary HeaderName where
   arbitrary = HeaderName . T.concat <$> genSomeText 7
   shrink (HeaderName t) = map HeaderName $ shrinkText t
 
 instance Arbitrary HeaderValue where
-  arbitrary = HeaderValue . T.concat <$> genSomeText 15
+  arbitrary = HeaderValue <$> genLines 10 4
   shrink (HeaderValue t) = map HeaderValue $ shrinkText t
 
 newtype HeaderName = HeaderName T.Text
