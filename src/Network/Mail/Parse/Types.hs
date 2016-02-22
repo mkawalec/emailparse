@@ -10,44 +10,28 @@ type UID = Integer
 type ErrorMessage = Text
 
 data EmailMessage = EmailMessage {
-  origDate :: Maybe ZonedTime,
-  from :: Maybe EmailAddress,
-  sender :: Maybe EmailAddress,
-  replyTo :: Maybe EmailAddress,
-  to :: Maybe [EmailAddress],
-  cc :: Maybe [EmailAddress],
-  bcc :: Maybe [EmailAddress],
-  messageId :: Maybe MessageId,
-  inReplyTo :: Maybe MessageId,
-  references :: Maybe [MessageId],
-  subject :: Maybe Text,
-  comments :: Maybe Text,
-  keywords :: Maybe [Text],
-
-  emailHeaders :: ![Header],
+  emailHeaders :: Either ErrorMessage [Header],
   emailBodies :: ![EmailBody]
 } deriving (Show, Eq)
 
-instance Eq ZonedTime where
-  x == y = (zonedTimeToLocalTime x) == (zonedTimeToLocalTime y) &&
-           (zonedTimeZone x) == (zonedTimeZone y)
-
-defaultZT :: ZonedTime
-defaultZT = ZonedTime {
-  zonedTimeZone = minutesToTimeZone 0,
-  zonedTimeToLocalTime = LocalTime {
-    localDay = ModifiedJulianDay {
-      toModifiedJulianDay = 1
-    },
-    localTimeOfDay = TimeOfDay {
-      todHour = 0,
-      todMin = 0,
-      todSec = 0
-    }
-  }
-}
-
 type MessageId = Text
+data Header = Date ZonedTime
+            | From EmailAddress
+            | ReplyTo EmailAddress
+            | To [EmailAddress]
+            | CC [EmailAddress]
+            | BCC [EmailAddress]
+            | MessageId MessageId
+            | InReplyTo MessageId
+            | References [MessageId]
+            | Subject Text
+            | Comments Text
+            | Keywords [Text]
+            | OtherHeader {
+                headerName :: !Text,
+                headerContents :: !Text
+            }
+            deriving (Eq, Show)
 
 data EmailAddress = EmailAddress {
   emailAddress :: !Text,
@@ -56,11 +40,6 @@ data EmailAddress = EmailAddress {
 
 instance Eq EmailAddress where
   x == y = emailAddress x == emailAddress y
-
-data Header = Header {
-  headerName :: !Text,
-  headerContents :: !Text
-} deriving (Eq, Show)
 
 -- |An email body contains the contents of an email part
 -- up until the boundary marker.
@@ -82,3 +61,23 @@ data EmailBody
     storageFilename :: Maybe Text
   }
   deriving (Eq, Show)
+
+
+instance Eq ZonedTime where
+  x == y = (zonedTimeToLocalTime x) == (zonedTimeToLocalTime y) &&
+           (zonedTimeZone x) == (zonedTimeZone y)
+
+defaultZT :: ZonedTime
+defaultZT = ZonedTime {
+  zonedTimeZone = minutesToTimeZone 0,
+  zonedTimeToLocalTime = LocalTime {
+    localDay = ModifiedJulianDay {
+      toModifiedJulianDay = 1
+    },
+    localTimeOfDay = TimeOfDay {
+      todHour = 0,
+      todMin = 0,
+      todSec = 0
+    }
+  }
+}

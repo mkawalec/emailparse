@@ -4,82 +4,68 @@ import Data.Attoparsec.ByteString
 
 import Data.List (find)
 import Data.Maybe
-import Data.Either (isRight, isLeft)
-import Data.Either.Unwrap (fromRight)
+import Data.Either (isRight)
 import Control.Monad (liftM)
 
 import Network.Mail.Parse.Types
 import Network.Mail.Parse.Utils
-import Data.Text (Text)
 
 import Network.Mail.Parse.Parsers.Utils (isMIME, discoverAttachment)
 import Network.Mail.Parse.Parsers.Multipart (parseMultipart)
 import Network.Mail.Parse.Decoders.BodyDecoder (decodeBody, decodeTextBody)
 import Network.Mail.Parse.Parsers.Header (headerParser)
 import Network.Mail.Parse.Parsers.HeaderFields
+import qualified Data.Text as T
 
 import qualified Data.ByteString.Char8 as BSC
-import qualified Data.Text as T
 import Data.Either.Utils (maybeToEither)
 import Data.Either.Combinators (mapLeft)
-import Data.Attoparsec.ByteString
-import Data.List (find)
-import Data.Maybe (fromJust, isJust)
 
 import Data.Text.Encoding (encodeUtf8)
-import Data.Either (rights, isRight)
 import Data.Either.Combinators (fromRight')
 
 import Codec.MIME.Parse (parseMIMEType)
 import Codec.MIME.Type
 
-import Control.Monad (foldM, mapM, join)
+import Control.Monad (join)
 import qualified Debug.Trace as DT
 
-parseHeader :: [Header] ->
-  (Text -> Either ErrorMessage a) -> Text ->  Either ErrorMessage a
-parseHeader headers parser headerN = liftM headerContents header >>= parser
-  where header = findHeader headerN headers
+parseHeader :: Header -> Either ErrorMessage Header
+parseHeader header =
+  case T.toLower . headerName $ header of
+    "date" -> liftM Date $ parseTime contents
+    "from" -> liftM From $ parseEmailAddress contents
+    "reply-to" -> liftM ReplyTo $ parseEmailAddress contents
+    "to" -> liftM To $ parseEmailAddressList contents
+    "cc" -> liftM CC $ parseEmailAddressList contents
+    "bcc" -> liftM BCC $ parseEmailAddressList contents
+    "message-id" -> Right $ MessageId contents
+    "in-reply-to" -> Right $ InReplyTo contents
+    "references" -> liftM References $ parseTextList " " contents
+    "subject" -> Right $ Subject contents
+    "comments" -> Right $ Comments contents
+    "keywords" -> liftM Keywords $ parseTextList "," contents
+    _ -> Right $ OtherHeader (headerName header) contents
+  where contents = headerContents header
 
 -- |Parses a single message
 messageParser :: Maybe [Header] -> Maybe [Header] -> Parser (Either ErrorMessage EmailMessage)
 messageParser headersIn helperHeadersIn = DT.trace "started" $ do
-  let headers = []
   headers <- if isJust headersIn
     then return . fromJust $ headersIn
     else manyTill' headerParser $ string "\r\n"
   let helperHeaders = if isJust helperHeadersIn then fromJust helperHeadersIn else []
 
-  DT.trace "hoai" $ return ()
   body <- takeByteString
-  --DT.trace ("got body " ++ (show body)) $ return ()
-
 
   -- Parse MIME if the message is in a MIME format
   let parsedBody = if isJust $ find isMIME headers
       then parseMIME (headers ++ helperHeaders) body
       else Right [TextBody $ decodeTextBody (headers ++ helperHeaders) body]
 
-  let p = parseHeader headers
-  let e2m = eitherToMaybe
 
-  return $! parsedBody >>= \b -> return EmailMessage {
-        origDate = e2m $ p parseTime "date"
-      , from = e2m $ p parseEmailAddress "from"
-      , sender = e2m $ p parseEmailAddress "from"
-      , replyTo = e2m $ p parseEmailAddress "reply-to"
-      , to = e2m $ p parseEmailAddressList "to"
-      , cc = e2m $ p parseEmailAddressList "cc"
-      , bcc = e2m $ p parseEmailAddressList "bcc"
-      , messageId = e2m $ p Right "message-id"
-      , inReplyTo = e2m $ p Right "in-reply-to"
-      , references = e2m $ p (parseTextList " ") "references"
-      , subject = e2m $ p Right "subject"
-      , comments = e2m $ p Right "comments"
-      , keywords = e2m $ p (parseTextList ",") "keywords"
-      , emailHeaders=headers
-      , emailBodies=b
-      }
+  let parsedHeaders = mapM parseHeader headers
+  return $! parsedBody >>= return . EmailMessage parsedHeaders
 
 
 -- |Parses a MIME message part. Needs headers from the actual message
