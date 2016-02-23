@@ -15,7 +15,7 @@ import qualified Debug.Trace as DT
 
 import Data.Either.Combinators (isRight, fromRight')
 
-tests = testGroup "(checked by QuickCheck)" [
+tests = testGroup "Headers" [
   (QC.testProperty "headerParser" prop_header)]
 
 genChar :: Gen Char
@@ -45,7 +45,6 @@ concatHdrLines :: T.Text -> T.Text
 concatHdrLines hdr = T.intercalate " " noSpaces
   where splitLines = T.splitOn "\r\n" hdr
         noSpaces = map (T.dropWhile isSpace) splitLines
-
 
 instance Arbitrary HeaderName where
   arbitrary = HeaderName . T.concat <$> genSomeText 7
