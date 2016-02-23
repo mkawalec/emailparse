@@ -9,7 +9,7 @@ import qualified Data.ByteString.Char8 as BSC
 import qualified Data.Text as T
 import Data.Text.Encoding (encodeUtf8)
 import qualified Data.Attoparsec.ByteString as AP
-import Data.Char (chr)
+import Data.Char (chr, isSpace)
 import Control.Monad (liftM)
 import qualified Debug.Trace as DT
 
@@ -41,6 +41,12 @@ genLines maxLineLength maxLines = do
   allLines <- mapM (const $ liftM T.concat $ genSomeText lineLength) [0..linesNo]
   return $ T.intercalate "\r\n   " allLines
 
+concatHdrLines :: T.Text -> T.Text
+concatHdrLines hdr = T.intercalate " " noSpaces
+  where splitLines = T.splitOn "\r\n" hdr
+        noSpaces = map (T.dropWhile isSpace) splitLines
+
+
 instance Arbitrary HeaderName where
   arbitrary = HeaderName . T.concat <$> genSomeText 7
   shrink (HeaderName t) = map HeaderName $ shrinkText t
@@ -58,7 +64,7 @@ prop_header :: HeaderName -> HeaderValue -> Property
 prop_header (HeaderName hdrName) (HeaderValue hdrValue) = property $
     isRight parsed &&
     headerName unpackedParsed == hdrName &&
-    headerContents unpackedParsed == hdrValue
+    headerContents unpackedParsed == concatHdrLines hdrValue
   where headerLine = BSC.concat [encodeUtf8 hdrName, ": ",
                                  encodeUtf8 hdrValue, "\r\n"]
         parsed = AP.parseOnly headerParser headerLine
