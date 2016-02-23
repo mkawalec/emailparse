@@ -10,7 +10,7 @@ type UID = Integer
 type ErrorMessage = Text
 
 data EmailMessage = EmailMessage {
-  emailHeaders :: Either ErrorMessage [Header],
+  emailHeaders :: [Header],
   emailBodies :: ![EmailBody]
 } deriving (Show, Eq)
 
@@ -27,7 +27,7 @@ data Header = Date ZonedTime
             | Subject Text
             | Comments Text
             | Keywords [Text]
-            | OtherHeader {
+            | Header {
                 headerName :: !Text,
                 headerContents :: !Text
             }

@@ -21,7 +21,7 @@ import qualified Data.ByteString.Char8 as BSC
 import Data.Either.Utils (maybeToEither)
 
 import Data.Text.Encoding (encodeUtf8)
-import Data.Either.Combinators (fromRight', mapLeft)
+import Data.Either.Combinators (fromRight', fromRight, mapLeft)
 
 import Codec.MIME.Parse (parseMIMEType)
 import Codec.MIME.Type
@@ -29,26 +29,24 @@ import Codec.MIME.Type
 import Control.Monad (join)
 import qualified Debug.Trace as DT
 
-parseHeader :: Header -> Either ErrorMessage Header
-parseHeader header =
-  mapLeft explicitErr $ case T.toLower hname of
-    "date" -> liftM Date $ parseTime contents
-    "from" -> liftM From $ parseEmailAddress contents
-    "reply-to" -> liftM ReplyTo $ parseEmailAddress contents
-    "to" -> liftM To $ parseEmailAddressList contents
-    "cc" -> liftM CC $ parseEmailAddressList contents
-    "bcc" -> liftM BCC $ parseEmailAddressList contents
-    "message-id" -> Right $ MessageId contents
-    "in-reply-to" -> Right $ InReplyTo contents
-    "references" -> liftM References $ parseTextList " " contents
-    "subject" -> Right $ Subject contents
-    "comments" -> Right $ Comments contents
-    "keywords" -> liftM Keywords $ parseTextList "," contents
-    _ -> Right $ OtherHeader hname contents
-  where hname       = headerName header
-        contents    = headerContents header
-        explicitErr = \err -> T.concat ["Error while parsing header'", hname,
-                                        "': ", err]
+parseHeader :: Header -> Header
+parseHeader header = fromRight header parsedHeader
+  where hname        = headerName header
+        contents     = headerContents header
+        parsedHeader = case T.toLower hname of
+          "date" -> liftM Date $ parseTime contents
+          "from" -> liftM From $ parseEmailAddress contents
+          "reply-to" -> liftM ReplyTo $ parseEmailAddress contents
+          "to" -> liftM To $ parseEmailAddressList contents
+          "cc" -> liftM CC $ parseEmailAddressList contents
+          "bcc" -> liftM BCC $ parseEmailAddressList contents
+          "message-id" -> Right $ MessageId contents
+          "in-reply-to" -> Right $ InReplyTo contents
+          "references" -> liftM References $ parseTextList " " contents
+          "subject" -> Right $ Subject contents
+          "comments" -> Right $ Comments contents
+          "keywords" -> liftM Keywords $ parseTextList "," contents
+          _ -> Right header
 
 -- |Parses a single message
 messageParser :: Maybe [Header] -> -- ^ Headers, if they were already parsed
@@ -62,7 +60,7 @@ messageParser headersIn helperHeadersIn = DT.trace "started" $ do
   let helperHeaders = if isJust helperHeadersIn then fromJust helperHeadersIn else []
 
   body <- takeByteString
-  let parsedHeaders = mapM parseHeader headers
+  let parsedHeaders = map parseHeader headers
 
   -- Parse MIME if the message is in a MIME format
   let parsedBody = if isJust $ find isMIME headers

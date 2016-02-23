@@ -39,7 +39,7 @@ genLines maxLineLength maxLines = do
   linesNo :: Int <- choose (0, maxLines)
 
   allLines <- mapM (const $ liftM T.concat $ genSomeText lineLength) [0..linesNo]
-  return $ T.intercalate "\r\n      " allLines
+  return $ T.intercalate "\r\n   " allLines
 
 instance Arbitrary HeaderName where
   arbitrary = HeaderName . T.concat <$> genSomeText 7

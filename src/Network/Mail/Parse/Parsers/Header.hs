@@ -27,7 +27,7 @@ headerParser = do
   let parsedBody = parseText headerBody
   let body = if isRight parsedBody then fromRight parsedBody else headerBody
 
-  return $ OtherHeader (decodeUtf8 headerName) body
+  return $ Header (decodeUtf8 headerName) body
 
 -- |Concatenate lines insterting whitespace between them.
 -- The whitespace needs to be inserted as these lines
