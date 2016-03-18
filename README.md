@@ -1,9 +1,8 @@
 # EmailParse
 
-## TODO
+An email parsing library that will parse any mostly-understandable email
+thrown at it, regardless of RFCs. What is seen in a wild is a priority
+here.
 
-- [x] Add a testing framework
-- [x] Remove code cruft from email
-- [x] Parse arbitrarily nested MIME messages
-- [ ] BUG: One level of MIME too deep with embedded mime
-- [ ] Test with the hellish example of a MIME message
+Polish phase todo moved to [a trello board](https://trello.com/b/JbKVHwX1/email-parsing-polish)
+
