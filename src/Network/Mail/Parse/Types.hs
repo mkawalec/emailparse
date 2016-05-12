@@ -1,6 +1,7 @@
 module Network.Mail.Parse.Types where
 
 import Data.Text
+import GHC.Generics
 import qualified Data.ByteString.Char8 as BS
 import Data.Time.Calendar (Day(..))
 import Data.Time.LocalTime (ZonedTime(..), minutesToTimeZone, LocalTime(..),
@@ -12,7 +13,7 @@ type ErrorMessage = Text
 data EmailMessage = EmailMessage {
   emailHeaders :: [Header],
   emailBodies :: ![EmailBody]
-} deriving (Show, Eq)
+} deriving (Show, Eq, Generic)
 
 type MessageId = Text
 data Header = Date ZonedTime
@@ -31,12 +32,12 @@ data Header = Date ZonedTime
                 headerName :: !Text,
                 headerContents :: !Text
             }
-            deriving (Eq, Show)
+            deriving (Eq, Show, Generic)
 
 data EmailAddress = EmailAddress {
   emailAddress :: !Text,
   emailLabel :: Maybe Text
-} deriving (Show)
+} deriving (Show, Generic)
 
 instance Eq EmailAddress where
   x == y = emailAddress x == emailAddress y
@@ -60,7 +61,7 @@ data EmailBody
     -- |Location of the actual filename on disk
     storageFilename :: Maybe Text
   }
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
 
 
 instance Eq ZonedTime where

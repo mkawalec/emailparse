@@ -10,6 +10,6 @@ import qualified Data.Text as T
 import Data.Either.Combinators (mapLeft)
 
 -- |Parses a single message of any mimetype
-parseMessage :: BSC.ByteString -> IO (Either ErrorMessage EmailMessage)
+parseMessage :: BSC.ByteString -> Either ErrorMessage EmailMessage
 parseMessage message =
-  return . join . mapLeft T.pack $ parseOnly (messageParser Nothing Nothing) message
+  join . mapLeft T.pack $ parseOnly (messageParser Nothing Nothing) message

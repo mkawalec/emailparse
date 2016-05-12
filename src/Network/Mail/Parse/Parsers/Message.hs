@@ -53,7 +53,7 @@ messageParser :: Maybe [Header] -> -- ^ Headers, if they were already parsed
                 Maybe [Header] -> -- ^ Context headers, useful is encoding is only
                                   -- defined in the message above, for instance
                 Parser (Either ErrorMessage EmailMessage)
-messageParser headersIn helperHeadersIn = DT.trace "started" $ do
+messageParser headersIn helperHeadersIn = do
   headers <- if isJust headersIn
     then return . fromJust $ headersIn
     else manyTill' headerParser $ string "\r\n"

@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                emailparse
-version:             0.1.0.0
+version:             0.2.0.3
 synopsis:            An email parser that will parse everything
 -- description:
 license:             BSD3
@@ -57,7 +57,7 @@ library
                        connection == 0.2.*,
                        pipes == 4.1.*,
                        imap >= 0.2.0.1,
-                       data-default == 0.5.*,
+                       data-default == 0.6.*,
                        derive == 2.5.*,
                        ipprint == 0.6
   hs-source-dirs:      src
@@ -72,6 +72,7 @@ library
                        ScopedTypeVariables,
                        TypeSynonymInstances,
                        DeriveFunctor,
+                       DeriveGeneric,
                        FlexibleInstances,
                        TemplateHaskell,
                        LambdaCase
@@ -109,7 +110,7 @@ Test-Suite emailparse-test
                        connection == 0.2.*,
                        pipes == 4.1.*,
                        imap >= 0.2.0.1,
-                       data-default == 0.5.*,
+                       data-default == 0.6.*,
                        derive == 2.5.*,
 
                        tasty == 0.11.*,
