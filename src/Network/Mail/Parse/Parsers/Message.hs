@@ -41,7 +41,7 @@ parseHeader header = fromRight header parsedHeader
           "cc" -> liftM CC $ parseEmailAddressList contents
           "bcc" -> liftM BCC $ parseEmailAddressList contents
           "message-id" -> MessageId <$> parseMessageId contents
-          "in-reply-to" -> Right $ InReplyTo contents
+          "in-reply-to" -> InReplyTo <$> parseMessageId contents
           "references" -> References <$> references
           "subject" -> Right $ Subject contents
           "comments" -> Right $ Comments contents
