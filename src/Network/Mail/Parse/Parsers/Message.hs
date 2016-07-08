@@ -27,7 +27,6 @@ import Codec.MIME.Parse (parseMIMEType)
 import Codec.MIME.Type
 
 import Control.Monad (join)
-import qualified Debug.Trace as DT
 
 parseHeader :: Header -> Header
 parseHeader header = fromRight header parsedHeader
@@ -40,7 +39,7 @@ parseHeader header = fromRight header parsedHeader
           "to" -> liftM To $ parseEmailAddressList contents
           "cc" -> liftM CC $ parseEmailAddressList contents
           "bcc" -> liftM BCC $ parseEmailAddressList contents
-          "message-id" -> Right $ MessageId contents
+          "message-id" -> MessageId <$> parseMessageId contents
           "in-reply-to" -> Right $ InReplyTo contents
           "references" -> liftM References $ parseTextList " " contents
           "subject" -> Right $ Subject contents
