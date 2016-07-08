@@ -32,6 +32,7 @@ parseHeader :: Header -> Header
 parseHeader header = fromRight header parsedHeader
   where hname        = headerName header
         contents     = headerContents header
+        references   = parseTextList " " contents >>= mapM parseMessageId
         parsedHeader = case T.toLower hname of
           "date" -> liftM Date $ parseTime contents
           "from" -> liftM From $ parseEmailAddress contents
@@ -41,7 +42,7 @@ parseHeader header = fromRight header parsedHeader
           "bcc" -> liftM BCC $ parseEmailAddressList contents
           "message-id" -> MessageId <$> parseMessageId contents
           "in-reply-to" -> Right $ InReplyTo contents
-          "references" -> liftM References $ parseTextList " " contents
+          "references" -> References <$> references
           "subject" -> Right $ Subject contents
           "comments" -> Right $ Comments contents
           "keywords" -> liftM Keywords $ parseTextList "," contents
