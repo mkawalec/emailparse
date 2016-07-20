@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                emailparse
-version:             0.2.0.3
+version:             0.2.0.6
 synopsis:            An email parser that will parse everything
 -- description:
 license:             BSD3

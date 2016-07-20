@@ -5,7 +5,8 @@ module Network.Mail.Parse.Parsers.HeaderFields (
   parseEmailAddress,
   parseEmailAddressList,
   parseText,
-  parseTextList
+  parseTextList,
+  parseMessageId
 ) where
 
 import Network.Mail.Parse.Types
@@ -58,6 +59,16 @@ eatWhitespace = AP.takeWhile (\c -> c == ',' || c == ' ')
 emailAddressListParser :: Parser [EmailAddress]
 emailAddressListParser =
   (eatWhitespace *> emailAddressParser) `sepBy'` char ','
+
+messageIdParser :: Parser MessageId
+messageIdParser = parseWrappedMsgId <|> takeText
+
+parseWrappedMsgId :: Parser MessageId
+parseWrappedMsgId = do
+  _ <- char '<'
+  msgId <- AP.takeWhile1 (/= '>')
+  _ <- char '>'
+  return msgId
 
 minutesAndHoursToTZ :: Int -> Either T.Text (Int, T.Text) ->
   (Int, T.Text) -> Either T.Text TimeZone
@@ -124,6 +135,9 @@ timeParser =
 parseTime :: T.Text -> Either ErrorMessage ZonedTime
 parseTime dateString = join . mapLeft T.pack $ parseOnly timeParser withoutDoW
   where withoutDoW = T.strip . last $  T.splitOn "," dateString
+
+parseMessageId :: T.Text -> Either ErrorMessage MessageId
+parseMessageId = mapLeft T.pack . parseOnly messageIdParser
 
 parseEmailAddress :: T.Text -> Either ErrorMessage EmailAddress
 parseEmailAddress = mapLeft T.pack . parseOnly emailAddressParser
