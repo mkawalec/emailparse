@@ -34,18 +34,18 @@ parseHeader header = fromRight header parsedHeader
         contents     = headerContents header
         references   = parseTextList " " contents >>= mapM parseMessageId
         parsedHeader = case T.toLower hname of
-          "date" -> liftM Date $ parseTime contents
-          "from" -> liftM From $ parseEmailAddress contents
-          "reply-to" -> liftM ReplyTo $ parseEmailAddress contents
-          "to" -> liftM To $ parseEmailAddressList contents
-          "cc" -> liftM CC $ parseEmailAddressList contents
-          "bcc" -> liftM BCC $ parseEmailAddressList contents
+          "date" -> Date <$> parseTime contents
+          "from" -> From <$> parseEmailAddress contents
+          "reply-to" -> ReplyTo <$> parseEmailAddress contents
+          "to" -> To <$> parseEmailAddressList contents
+          "cc" -> CC <$> parseEmailAddressList contents
+          "bcc" -> BCC <$> parseEmailAddressList contents
           "message-id" -> MessageId <$> parseMessageId contents
           "in-reply-to" -> InReplyTo <$> parseMessageId contents
           "references" -> References <$> references
           "subject" -> Right $ Subject contents
           "comments" -> Right $ Comments contents
-          "keywords" -> liftM Keywords $ parseTextList "," contents
+          "keywords" -> Keywords <$> parseTextList "," contents
           _ -> Right header
 
 -- |Parses a single message
