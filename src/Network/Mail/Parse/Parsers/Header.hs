@@ -16,7 +16,7 @@ import qualified Data.ByteString.Char8 as BSC
 -- |Parses a header
 headerParser :: Parser Header
 headerParser = do
-  headerName <- AP.takeWhile (/= _colon)
+  headerN <- AP.takeWhile (/= _colon)
   word8 _colon
   AP.takeWhile isWhitespace
 
@@ -27,7 +27,7 @@ headerParser = do
   let parsedBody = parseText headerBody
   let body = if isRight parsedBody then fromRight parsedBody else headerBody
 
-  return $ Header (decodeUtf8 headerName) body
+  return $ Header (decodeUtf8 headerN) body
 
 -- |Concatenate lines insterting whitespace between them.
 -- The whitespace needs to be inserted as these lines

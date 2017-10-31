@@ -49,10 +49,10 @@ parseHeader header = fromRight header parsedHeader
           _ -> Right header
 
 -- |Parses a single message
-messageParser :: Maybe [Header] -> -- ^ Headers, if they were already parsed
-                Maybe [Header] -> -- ^ Context headers, useful is encoding is only
+messageParser :: Maybe [Header]   -- ^ Headers, if they were already parsed
+                -> Maybe [Header] -- ^ Context headers, useful is encoding is only
                                   -- defined in the message above, for instance
-                Parser (Either ErrorMessage EmailMessage)
+                -> Parser (Either ErrorMessage EmailMessage)
 messageParser headersIn helperHeadersIn = do
   headers <- if isJust headersIn
     then return . fromJust $ headersIn

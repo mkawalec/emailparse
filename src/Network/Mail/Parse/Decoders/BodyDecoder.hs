@@ -7,7 +7,7 @@ import Codec.MIME.Type
 
 import Data.Either.Combinators (mapLeft, fromRight')
 import Data.Either.Utils (maybeToEither)
-import Data.Either (isRight, rights)
+import Data.Either (isRight)
 
 import Data.List (find)
 
