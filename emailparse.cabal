@@ -31,14 +31,14 @@ library
                        Network.Mail.Parse.Parsers.Utils
   -- other-modules:
   -- other-extensions:
-  build-depends:       base >=4.10 && <4.11,
+  build-depends:       base >=4.10 && <4.12,
                        bytestring == 0.10.*,
                        attoparsec == 0.13.*,
                        word8 == 0.1.*,
                        text == 1.2.*,
                        mime == 0.4.*,
                        MissingH == 1.4.*,
-                       either == 4.4.*,
+                       either >= 4.4.0 && <6,
                        text-icu == 0.7.*,
                        time == 1.8.*,
                        strptime == 1.0.*,
