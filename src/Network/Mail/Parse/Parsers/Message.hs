@@ -61,11 +61,7 @@ messageParser headersIn helperHeadersIn = do
 
   body <- takeByteString
   let parsedHeaders = map parseHeader headers
-
-  -- Parse MIME if the message is in a MIME format
-  let parsedBody = if isJust $ find isMIME headers
-      then parseMIME (headers ++ helperHeaders) body
-      else Right [TextBody $ decodeTextBody (headers ++ helperHeaders) body]
+      parsedBody = parseMIME (headers ++ helperHeaders) body
 
   return $! parsedBody >>= return . EmailMessage parsedHeaders
 
