@@ -1,13 +1,13 @@
-module Network.Mail.Parse.Parsers.HeaderFields (
-  emailAddressParser,
-  emailAddressListParser,
-  parseTime,
-  parseEmailAddress,
-  parseEmailAddressList,
-  parseText,
-  parseTextList,
-  parseMessageId
-) where
+module Network.Mail.Parse.Parsers.HeaderFields
+    ( emailAddressParser
+    , emailAddressListParser
+    , parseTime
+    , parseEmailAddress
+    , parseEmailAddressList
+    , parseText
+    , parseTextList
+    , parseMessageId
+    ) where
 
 import Network.Mail.Parse.Types
 import Network.Mail.Parse.Decoders.BodyDecoder (transferDecode, encodingToUtf)
@@ -22,11 +22,10 @@ import Data.Maybe
 import qualified Data.Char as C
 import Data.Either (isRight)
 import Data.Either.Combinators (mapLeft, mapBoth)
-
 import Data.Either.Unwrap (fromRight)
-
 import Data.Time.Parse (strptime)
 import Data.Time.LocalTime
+import Data.Tuple (fst)
 import Control.Monad (join, liftM)
 
 -- |Parses a name-addr formatted email
@@ -95,7 +94,7 @@ zoneToOffset offset = if offsetH == '+' || offsetH == '-'
     "PST" -> -8
     "PDT" -> -7
     _ -> 0
-  where offsetH = T.head offset
+  where offsetH = maybe ' ' fst $ T.uncons offset
         direction = if offsetH == '+' then 1 else -1
         splitOffset = T.splitAt 2 $ T.tail offset
         hours = mapLeft T.pack $ TR.decimal . fst $ splitOffset
