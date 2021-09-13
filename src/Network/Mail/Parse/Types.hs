@@ -48,9 +48,10 @@ data EmailBody
   -- |Body of a MIME message part. Contains headers
   = MessageBody EmailMessage
   -- = MIMEBody { mimeHeaders :: ![Header], mimeBody :: !Text}
-  -- |If the message contained no MIME information, it's probably
-  -- just some text. Best guess decoding into UTF-8 is applied
+  -- |A raw text body
   | TextBody !Text
+  -- |Unknown body that may contain arbitrary binary
+  | OtherBody !BS.ByteString
   -- |Attachment is part of a MIME message, but a rather special
   -- one. It's decoded from whatever the transfer encoding was applied
   -- and left as a raw sollection of bytes for your enjoyment

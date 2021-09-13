@@ -91,7 +91,7 @@ parseMIME headers body = if isRight msgType then
   (case mimeType . fromRight' $ msgType of
     Multipart _ -> multiParsed >>= multipartParser headers
     Text _ -> Right decodedBody
-    _ -> Left "mimetype not supported")
+    _ -> Right [OtherBody $ decodeBody headers body])
   else Right decodedBody
   where msgType = findHeader "Content-Type" headers >>=
           Right . parseMIMEType . headerContents >>=
