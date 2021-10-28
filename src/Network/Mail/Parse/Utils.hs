@@ -39,9 +39,10 @@ isConsequentHeaderLine = satisfy isWhitespace *>
 commentRemover :: Text -> Text
 commentRemover contents = T.strip withoutComment
   where splitAtComment = T.split (\c -> c == '(' || c == ')') contents
-        withoutComment = if length splitAtComment > 1
-                          then T.append (head splitAtComment) (last splitAtComment)
-                          else head splitAtComment
+        withoutComment = case splitAtComment of
+            [] -> ""
+            [x] -> x
+            x:xs -> T.append x (last xs)
 
 -- |Given a header name, it will try to locate it in
 -- a list of headers, fail if it's not there

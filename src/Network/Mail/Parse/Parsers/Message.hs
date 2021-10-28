@@ -49,10 +49,10 @@ parseHeader header = fromRight header parsedHeader
           _ -> Right header
 
 -- |Parses a single message
-messageParser :: Maybe [Header]   -- ^ Headers, if they were already parsed
-                -> Maybe [Header] -- ^ Context headers, useful is encoding is only
-                                  -- defined in the message above, for instance
-                -> Parser (Either ErrorMessage EmailMessage)
+messageParser :: Maybe [Header] -- ^ Headers, if they were already parsed
+              -> Maybe [Header] -- ^ Context headers, useful is encoding is only
+                                -- defined in the message above, for instance
+              -> Parser (Either ErrorMessage EmailMessage)
 messageParser headersIn helperHeadersIn = do
   headers <- if isJust headersIn
     then return . fromJust $ headersIn
@@ -61,11 +61,7 @@ messageParser headersIn helperHeadersIn = do
 
   body <- takeByteString
   let parsedHeaders = map parseHeader headers
-
-  -- Parse MIME if the message is in a MIME format
-  let parsedBody = if isJust $ find isMIME headers
-      then parseMIME (headers ++ helperHeaders) body
-      else Right [TextBody $ decodeTextBody (headers ++ helperHeaders) body]
+      parsedBody = parseMIME (headers ++ helperHeaders) body
 
   return $! parsedBody >>= return . EmailMessage parsedHeaders
 
@@ -95,7 +91,7 @@ parseMIME headers body = if isRight msgType then
   (case mimeType . fromRight' $ msgType of
     Multipart _ -> multiParsed >>= multipartParser headers
     Text _ -> Right decodedBody
-    _ -> Left "mimetype not supported")
+    _ -> Right [OtherBody $ decodeBody headers body])
   else Right decodedBody
   where msgType = findHeader "Content-Type" headers >>=
           Right . parseMIMEType . headerContents >>=
